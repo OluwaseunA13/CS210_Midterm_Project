@@ -1,0 +1,136 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+using namespace std;
+
+// Structure for a school node
+struct School {
+    string name, address, city, state, county;
+    School* next;
+
+    School(string n, string a, string c, string s, string co)
+        : name(n), address(a), city(c), state(s), county(co), next(nullptr) {}
+};
+
+// Singly linked list class
+class SchoolList {
+private:
+    School* head;
+
+public:
+    SchoolList() : head(nullptr) {}
+
+    // Insert at the beginning
+    void insertFirst(School* school) {
+        school->next = head;
+        head = school;
+    }
+
+    // Insert at the end
+    void insertLast(School* school) {
+        if (!head) {
+            head = school;
+            return;
+        }
+        School* temp = head;
+        while (temp->next) temp = temp->next;
+        temp->next = school;
+    }
+
+    // Find a school by name
+    School* findByName(string name) {
+        School* temp = head;
+        while (temp) {
+            if (temp->name == name) return temp;
+            temp = temp->next;
+        }
+        return nullptr;
+    }
+
+    // Delete a school by name
+    void deleteByName(string name) {
+        if (!head) return;
+
+        if (head->name == name) {
+            School* toDelete = head;
+            head = head->next;
+            delete toDelete;
+            return;
+        }
+
+        School* temp = head;
+        while (temp->next && temp->next->name != name) {
+            temp = temp->next;
+        }
+
+        if (temp->next) {
+            School* toDelete = temp->next;
+            temp->next = temp->next->next;
+            delete toDelete;
+        }
+    }
+
+    // Display all schools
+    void display() {
+        School* temp = head;
+        while (temp) {
+            cout << temp->name << ", " << temp->address << ", " 
+                 << temp->city << ", " << temp->state << ", " 
+                 << temp->county << endl;
+            temp = temp->next;
+        }
+    }
+};
+
+// Read CSV file
+void loadCSV(SchoolList& list, const string& filename) {
+    ifstream file(filename);
+    string line, name, address, city, state, county;
+
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << filename << endl;
+        return;
+    }
+
+    getline(file, line); // Skip header line
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        getline(ss, name, ',');
+        getline(ss, address, ',');
+        getline(ss, city, ',');
+        getline(ss, state, ',');
+        getline(ss, county, ',');
+
+        list.insertLast(new School(name, address, city, state, county));
+    }
+    file.close();
+}
+
+int main() {
+    SchoolList list;
+    loadCSV(list, "schools.csv");
+
+    cout << "School List Loaded:\n";
+    list.display();
+
+    string searchName;
+    cout << "\nEnter school name to search: ";
+    getline(cin, searchName);
+    School* found = list.findByName(searchName);
+    if (found) {
+        cout << "Found: " << found->name << " in " << found->city << endl;
+    } else {
+        cout << "School not found.\n";
+    }
+
+    string deleteName;
+    cout << "\nEnter school name to delete: ";
+    getline(cin, deleteName);
+    list.deleteByName(deleteName);
+
+    cout << "\nUpdated School List:\n";
+    list.display();
+
+    return 0;
+}
